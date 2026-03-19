@@ -1,121 +1,197 @@
-# 📊 Customer Churn Analysis & Prediction using Machine Learning
+# 📉 Customer Churn Prediction using Machine Learning
 
-## 📌 Project Overview
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rishiraghu11/Customer_Churn_Prediction_using_ML/blob/main/Customer_Churn_Prediction_using_ML.ipynb)
 
-Customer churn is a critical business problem where retaining existing customers is often more cost-effective than acquiring new ones.
-This project implements an end-to-end churn analysis and prediction pipeline using Python, focusing on interpretability and business usability rather than complex black-box models.
+---
 
-The project combines data analysis, feature engineering, and machine learning to identify churn drivers and predict churn probability for individual customers.
+## 📖 Overview
+
+Customer churn — when a customer stops using a service — is one of the most costly problems in the telecom industry. Retaining an existing customer is significantly cheaper than acquiring a new one, making early churn detection a high-value business problem.
+
+This project builds an **end-to-end churn prediction pipeline** on the IBM Telco Customer Churn dataset. It covers data cleaning, exploratory analysis, class imbalance handling with SMOTE, multi-model training, and a deployable prediction system with per-customer risk scoring and explainability.
+
+---
 
 ## 🎯 Objectives
 
-Analyze customer behavior and identify churn patterns
+- Identify behavioral and contractual patterns that drive customer churn.
+- Handle class imbalance using **SMOTE** (Synthetic Minority Oversampling Technique).
+- Train and compare **three ML models** to select the best performer.
+- Output **churn probability** rather than just binary Yes/No predictions.
+- Segment customers into **Low / Medium / High churn risk** tiers.
+- Explain predictions at the **individual customer level** using feature importances.
+- Save the trained model and encoders as `.pkl` files for deployment.
 
-Build an interpretable machine learning model to predict churn
+---
 
-Generate probability-based churn risk instead of only binary predictions
+## 📂 Project Structure
 
-Explain churn predictions at an individual customer level
+```
+Customer_Churn_Prediction/
+│
+├── Customer_Churn_Prediction_using_ML.ipynb   # Main notebook
+├── Telco-Customer-Churn.csv                   # Dataset                     
+└── README.md
+```
 
-Translate analytical insights into actionable business recommendations
+---
 
-## 🛠️ Tools & Technologies
+## 📊 Dataset
 
-Python
+**Source:** IBM Telco Customer Churn Dataset  
+**File:** `Telco-Customer-Churn.csv`  
+**Records:** 7,043 customers | **Features:** 20 + 1 target (`Churn`)
 
-Pandas, NumPy – data manipulation
+| Feature Group | Columns |
+|---------------|---------|
+| Demographics | `gender`, `SeniorCitizen`, `Partner`, `Dependents` |
+| Account Info | `tenure`, `Contract`, `PaperlessBilling`, `PaymentMethod` |
+| Services | `PhoneService`, `MultipleLines`, `InternetService`, `OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies` |
+| Charges | `MonthlyCharges`, `TotalCharges` |
+| Target | `Churn` (Yes / No) |
 
-Matplotlib, Seaborn – data visualization
+**Data quality notes:**
+- `customerID` dropped (non-predictive identifier).
+- 11 rows had whitespace in `TotalCharges` — replaced with `0.0` and cast to float.
+- `MonthlyCharges` comma-decimal format normalized to float.
+- Class imbalance: ~73% No Churn vs ~27% Churn — addressed with SMOTE.
 
-Scikit-learn – machine learning (Logistic Regression)
-
-Google Colab
+---
 
 ## 🔍 Methodology
 
-### 1️⃣ Data Cleaning & EDA
+### 1. Exploratory Data Analysis
+- Histograms with mean/median overlays for `tenure`, `MonthlyCharges`, `TotalCharges`.
+- Box plots to assess distribution spread and outliers.
+- Correlation heatmap across numerical features.
+- Count plots for all categorical features.
 
-Handled missing and inconsistent values
+### 2. Data Preprocessing
+- Label encoding applied to all categorical columns using `sklearn.LabelEncoder`.
+- Encoders saved to `encoders.pkl` for consistent reuse during prediction.
+- `Churn` encoded as 1 (Yes) / 0 (No).
 
-Converted categorical variables into numerical format
+### 3. Class Imbalance — SMOTE
+- Stratified 80/20 train-test split applied **before** SMOTE to prevent data leakage.
+- SMOTE applied only on training data to synthetically balance the minority class.
+- Post-SMOTE training set achieves a balanced 50/50 class distribution.
 
-Performed exploratory data analysis to understand churn trends across:
+### 4. Model Training & Selection
+Three models trained with default hyperparameters and evaluated via **5-fold cross-validation**:
 
-Contract type
+| Model | Result |
+|-------|--------|
+| Decision Tree | Baseline |
+| **Random Forest** | **Best CV Accuracy ✅** |
+| XGBoost | Competitive |
 
-Tenure
+**Random Forest** selected as the final model.
 
-Monthly and total charges
+### 5. Model Evaluation
+Final model evaluated on the held-out test set using accuracy score, confusion matrix, and a full classification report (precision, recall, F1 per class).
 
-Service usage
+### 6. Predictive System
+Model and encoders loaded from `.pkl` files. New customer data is encoded using saved encoders and passed to the model, returning both a **binary prediction** and a **churn probability score**.
 
-### 2️⃣ Feature Engineering
+### 7. Risk Segmentation
 
-Removed non-predictive identifiers
+| Risk Tier | Churn Probability |
+|-----------|------------------|
+| 🟢 Low Risk | < 30% |
+| 🟡 Medium Risk | 30% – 60% |
+| 🔴 High Risk | > 60% |
 
-Encoded categorical features
+### 8. Individual Explainability
+Per-customer feature impact computed as `feature_value × feature_importance`, surfacing the top drivers behind each individual prediction.
 
-Prepared a clean, ML-ready dataset
-
-### 3️⃣ Machine Learning Model
-
-Logistic Regression was used due to its interpretability and suitability for churn prediction
-
-Dataset was split using stratified train-test split
-
-Model evaluation focused on:
-
-Recall (Churn = 1)
-
-ROC-AUC score
-
-### 4️⃣ Probability-Based Prediction
-
-Model outputs churn probabilities instead of only Yes/No predictions
-
-Customers are categorized into:
-
-Low Risk
-
-Medium Risk
-
-High Risk of churn
-
-### 5️⃣ Explainable ML
-
-Feature coefficient analysis identifies global churn drivers
-
-Individual customer-level impact analysis explains why a specific churn prediction was made
+---
 
 ## 📈 Key Insights
 
-High monthly and total charges are the strongest drivers of churn
+- **High monthly and total charges** are the strongest predictors of churn.
+- **Short tenure** significantly elevates churn risk — early-stage customers are the most vulnerable.
+- **Month-to-month contracts** are associated with much higher churn than 1- or 2-year contracts.
+- **Electronic check** payment method shows a moderate association with churn.
+- **Demographics** (gender, senior citizen status) have minimal predictive impact.
 
-Shorter tenure significantly increases churn risk
-
-Long-term contracts reduce churn probability
-
-Demographic features such as gender and senior citizen status have minimal impact
+---
 
 ## 💡 Business Recommendations
 
-Target high-risk customers with discounts or contract upgrades
+- Proactively target **High Risk** customers with personalized retention offers — discounts, contract upgrades, or service bundles.
+- Launch **early-tenure onboarding programs** to reduce churn in the first 3–6 months.
+- Incentivize month-to-month customers to **switch to annual contracts**.
+- Investigate **electronic check users** — payment friction may be an operational churn signal.
+- Use **churn probability scores** (not just binary output) to prioritize the retention team's outreach queue efficiently.
 
-Focus retention efforts on early-tenure customers
+---
 
-Encourage bundled services for customers with high monthly charges
+## 🛠️ Tools & Technologies
 
-Use churn probability thresholds to prioritize retention actions
+| Tool | Purpose |
+|------|---------|
+| **Python** | Core language |
+| **Pandas, NumPy** | Data manipulation and cleaning |
+| **Matplotlib, Seaborn** | EDA visualizations |
+| **Scikit-learn** | Preprocessing, model training, evaluation |
+| **XGBoost** | Gradient boosting classifier |
+| **imbalanced-learn** | SMOTE for class imbalance |
+| **Pickle** | Model and encoder serialization |
+| **Google Colab** | Development environment |
+
+---
+
+## ⚙️ How to Run
+
+**1. Install dependencies:**
+```bash
+pip install pandas numpy matplotlib seaborn scikit-learn xgboost imbalanced-learn
+```
+
+**2. Open the notebook** in Google Colab or Jupyter and run all cells top to bottom.
+
+**3. Predict for a new customer:**
+```python
+import pickle, pandas as pd
+
+input_data = {
+    'gender': 'Female', 'SeniorCitizen': 0, 'Partner': 'Yes',
+    'Dependents': 'No', 'tenure': 1, 'PhoneService': 'No',
+    'MultipleLines': 'No phone service', 'InternetService': 'DSL',
+    'OnlineSecurity': 'No', 'OnlineBackup': 'Yes',
+    'DeviceProtection': 'No', 'TechSupport': 'No',
+    'StreamingTV': 'No', 'StreamingMovies': 'No',
+    'Contract': 'Month-to-month', 'PaperlessBilling': 'Yes',
+    'PaymentMethod': 'Electronic check',
+    'MonthlyCharges': 29.85, 'TotalCharges': 29.85
+}
+
+with open("encoders.pkl", "rb") as f:
+    encoders = pickle.load(f)
+with open("customer_churn_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
+
+df_input = pd.DataFrame([input_data])
+for col, enc in encoders.items():
+    df_input[col] = enc.transform(df_input[col])
+
+prob = model_data["model"].predict_proba(df_input)[0][1]
+prediction = model_data["model"].predict(df_input)[0]
+print(f"Prediction : {'Churn' if prediction == 1 else 'No Churn'}")
+print(f"Churn Probability: {prob:.2%}")
+```
+
+---
 
 ## 🚧 Limitations & Future Scope
 
-Model is trained on historical data and may not capture recent behavior changes
+- Model trained on static historical data — may drift as customer behavior evolves over time.
+- Customer support interactions, NPS scores, and real-time usage patterns are not included.
+- Hyperparameter tuning (Grid Search / Optuna) could further improve model performance.
+- Future work: deploy as a **REST API** (Flask / FastAPI) or integrate into a CRM dashboard for real-time churn scoring.
 
-Customer support interactions and sentiment data are not included
+---
 
-Future work may include real-time churn prediction or deployment as an API
+## 👨‍💻 Author
 
-## 🏁 Conclusion
-
-This project demonstrates how data analysis and interpretable machine learning can be combined to solve a real-world business problem.
-By focusing on churn probability and explainability, the solution provides actionable insights that can support effective customer retention strategies.
+**Rishi Raj Singh Raghuvanshi**
